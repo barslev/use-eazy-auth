@@ -1,5 +1,5 @@
-import { Dispatch, MutableRefObject } from 'react'
 import {
+  lastValueFrom,
   Subject,
   concat,
   of,
@@ -9,7 +9,8 @@ import {
   Observable,
   EMPTY,
   ConnectableObservable,
-} from 'rxjs'
+} from 'rxjs';
+import { Dispatch, MutableRefObject } from 'react'
 import {
   filter,
   exhaustMap,
@@ -261,8 +262,7 @@ export default function makeCallApiRx<A, R>(
     apiFn: CurryAuthApiFnPromise<A, O>,
     ...args: any[]
   ): Promise<O> {
-    return getAccessToken()
-      .toPromise()
+    return lastValueFrom(getAccessToken())
       .then((firstAccessToken) => {
         return apiFn(firstAccessToken)(...args).catch((error) => {
           if (firstAccessToken !== null) {
@@ -273,8 +273,7 @@ export default function makeCallApiRx<A, R>(
             }
             if (error.status === 401) {
               // Try refresh
-              return refreshOnUnauth(firstAccessToken)
-                .toPromise()
+              return lastValueFrom(refreshOnUnauth(firstAccessToken))
                 .then((accessToken) => {
                   return apiFn(accessToken)(...args).catch((error) => {
                     unauthLogout(accessToken, error)
